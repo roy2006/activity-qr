@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Activity Registration — QR Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f2eb;
+    --card: #fffef9;
+    --ink: #1a1814;
+    --ink2: #6b6860;
+    --accent: #2d5a3d;
+    --accent-light: #e8f0eb;
+    --border: #dedad2;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  header {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+  }
+
+  header p {
+    font-size: 14px;
+    color: var(--ink2);
+    font-weight: 300;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .field {
+    margin-bottom: 1.25rem;
+  }
+
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink2);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"],
+  input[type="date"] {
+    width: 100%;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  input[type="text"]:focus,
+  input[type="date"]:focus {
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 1.5rem;
+    letter-spacing: 0.01em;
+  }
+
+  .btn:hover { opacity: 0.88; }
+  .btn:active { transform: scale(0.99); }
+
+  /* Result card */
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    display: none;
+    animation: fadeUp 0.25s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink2);
+    margin-bottom: 8px;
+  }
+
+  .url-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    align-items: center;
+  }
+
+  .url-box {
+    flex: 1;
+    padding: 10px 12px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--ink2);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  .copy-btn {
+    padding: 10px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-light);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+
+  .copy-btn:hover { background: #d4e7d9; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  .qr-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  #qr-box {
+    padding: 16px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: inline-block;
+  }
+
+  #qr-box canvas,
+  #qr-box img {
+    display: block;
+  }
+
+  .dl-btn {
+    padding: 10px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .dl-btn:hover { background: var(--bg); }
+
+  footer {
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 12px;
+    color: var(--ink2);
+    font-weight: 300;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Activity Registration</h1>
+    <p>Fill in the details to get a shareable link and QR code</p>
+  </header>
+
+  <div class="card">
+    <div class="field">
+      <label for="location">Activity location</label>
+      <input type="text" id="location" placeholder="e.g. Tel Aviv Community Center" />
+    </div>
+    <div class="field">
+      <label for="date">Activity date</label>
+      <input type="text" id="date" placeholder="DD/MM/YYYY" maxlength="10" inputmode="numeric" />
+    </div>
+    <div class="field">
+      <label for="caption">Caption (appears below QR code)</label>
+      <input type="text" id="caption" placeholder="e.g. Scan to register for this activity" />
+    </div>
+    <button class="btn" onclick="generate()">Generate link &amp; QR code</button>
+  </div>
+
+  <div class="result-card" id="result">
+    <p class="result-label">Your link</p>
+    <div class="url-row">
+      <div class="url-box" id="url-display"></div>
+      <button class="copy-btn" id="copy-btn" onclick="copyURL()">Copy</button>
+    </div>
+    <hr class="divider" />
+    <p class="result-label" style="text-align:center; margin-bottom: 1rem;">QR code</p>
+    <div class="qr-wrap">
+      <div id="qr-box"></div>
+      <p id="qr-caption" style="font-size: 14px; color: var(--ink2); text-align: center; max-width: 220px; line-height: 1.5; display: none;"></p>
+      <button class="dl-btn" onclick="downloadQR()">↓ Download PNG</button>
+    </div>
+  </div>
+
+  <footer>Links open the registration form with your details pre-filled.</footer>
+
+</div>
+
+<script>
+  const dateInput = document.getElementById('date');
+  dateInput.addEventListener('input', function(e) {
+    let v = e.target.value.replace(/\D/g, '');
+    if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+    if (v.length > 5) v = v.slice(0,5) + '/' + v.slice(5,9);
+    e.target.value = v;
+  });
+
+  const BASE = 'https://forms.monday.com/forms/4d24a47c92147d9d6c76f8754be14fd0';
+  const FIXED = { r: 'euc1' };
+
+  let lastURL = '';
+
+  function generate() {
+    const location = document.getElementById('location').value.trim();
+    const date     = document.getElementById('date').value.trim();
+    const caption  = document.getElementById('caption').value.trim();
+
+    const params = new URLSearchParams(FIXED);
+    params.set('Activity-location', location);
+    params.set('Activitydate', date);
+
+    lastURL = BASE + '?' + params.toString();
+
+    document.getElementById('url-display').textContent = lastURL;
+
+    const resultEl = document.getElementById('result');
+    resultEl.style.display = 'block';
+
+    const qrBox = document.getElementById('qr-box');
+    qrBox.innerHTML = '';
+    new QRCode(qrBox, {
+      text: lastURL,
+      width: 200,
+      height: 200,
+      colorDark: '#1a1814',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    const captionEl = document.getElementById('qr-caption');
+    if (caption) {
+      captionEl.textContent = caption;
+      captionEl.style.display = 'block';
+    } else {
+      captionEl.style.display = 'none';
+    }
+
+    document.getElementById('copy-btn').textContent = 'Copy';
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function copyURL() {
+    navigator.clipboard.writeText(lastURL).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  function downloadQR() {
+    const qrCanvas = document.querySelector('#qr-box canvas');
+    if (!qrCanvas) return;
+
+    const caption = document.getElementById('qr-caption').textContent.trim();
+    const qrSize = 200;
+    const padding = 20;
+    const fontSize = 15;
+    const lineHeight = 22;
+
+    const offscreen = document.createElement('canvas');
+
+    if (caption) {
+      const tempCtx = document.createElement('canvas').getContext('2d');
+      tempCtx.font = `${fontSize}px DM Sans, sans-serif`;
+      const maxWidth = qrSize;
+      const words = caption.split(' ');
+      let lines = [], line = '';
+      for (const word of words) {
+        const test = line ? line + ' ' + word : word;
+        if (tempCtx.measureText(test).width > maxWidth && line) {
+          lines.push(line); line = word;
+        } else { line = test; }
+      }
+      if (line) lines.push(line);
+
+      const textHeight = lines.length * lineHeight + 12;
+      offscreen.width  = qrSize + padding * 2;
+      offscreen.height = qrSize + padding * 2 + textHeight;
+      const ctx = offscreen.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, offscreen.width, offscreen.height);
+      ctx.drawImage(qrCanvas, padding, padding, qrSize, qrSize);
+      ctx.font = `${fontSize}px DM Sans, sans-serif`;
+      ctx.fillStyle = '#6b6860';
+      ctx.textAlign = 'center';
+      lines.forEach((l, i) => {
+        ctx.fillText(l, offscreen.width / 2, qrSize + padding * 2 + i * lineHeight);
+      });
+    } else {
+      offscreen.width  = qrSize + padding * 2;
+      offscreen.height = qrSize + padding * 2;
+      const ctx = offscreen.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, offscreen.width, offscreen.height);
+      ctx.drawImage(qrCanvas, padding, padding, qrSize, qrSize);
+    }
+
+    const a = document.createElement('a');
+    a.download = 'activity-qr.png';
+    a.href = offscreen.toDataURL('image/png');
+    a.click();
+  }
+</script>
+</body>
+</html>
